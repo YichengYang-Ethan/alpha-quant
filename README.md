@@ -34,6 +34,8 @@ shared/                      the engine — used by ALL THREE methods
   alpha_analyze.py             Tier-2 atom: full data package for one name
   screen_book.py               deterministic equal-weight Strong-Buy book screen
   build_fewshot_index.py       build a local few-shot index
+  options_income.py            overlay tool: defined-risk premium-selling idea generator (BS POP)
+  etf_rotation.py              overlay tool: trend-following ETF rotation backtest + positioning
 workflows/
   picks/                       concentrated pick funnel (alpha_run, alpha_run_pure)
   portfolio/                   equal-weight book maintenance (portfolio_run)
@@ -81,6 +83,10 @@ python shared/alpha_analyze.py NVDA --source sa
 
 # picks funnel:        run workflows/picks/alpha_run.js      via the Workflow tool
 # portfolio maintenance: run workflows/portfolio/portfolio_run.js via the Workflow tool
+
+# overlay tools — deterministic, yfinance-only (pair with the methods; not LLM workflows)
+python shared/options_income.py NVDA          # defined-risk premium-selling income idea
+python shared/etf_rotation.py                 # trend-following risk-on/off rotation
 ```
 
 ## The honesty layer (the point)
