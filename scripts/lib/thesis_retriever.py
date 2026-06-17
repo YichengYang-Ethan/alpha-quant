@@ -23,15 +23,16 @@ def _helpers():
     return classify, keywords
 
 
-def load_index():
-    if not INDEX.exists():
+def load_index(index_path: str | Path | None = None):
+    p = Path(index_path) if index_path else INDEX
+    if not p.exists():
         return []
-    return json.load(open(INDEX))["records"]
+    return json.load(open(p))["records"]
 
 
 def retrieve(query_text: str, sector: str | None = None, k: int = 4,
-             prefer_type: str = "buy") -> list[dict]:
-    recs = load_index()
+             prefer_type: str = "buy", index_path: str | Path | None = None) -> list[dict]:
+    recs = load_index(index_path)
     if not recs:
         return []
     classify, keywords = _helpers()
@@ -60,7 +61,7 @@ def format_fewshot(exemplars: list[dict]) -> str:
         return "(no corpus exemplars available)"
     parts = []
     for e in exemplars:
-        parts.append(f"### Past Alpha Pick: {e['ticker']} ({e['date']}, {e['type']}, theme={e['theme']})\n"
+        parts.append(f"### Past pick: {e['ticker']} ({e['date']}, {e['type']}, theme={e['theme']})\n"
                      f"Outcome: {e['outcome']}\n{e['md']}")
     return "\n\n---\n\n".join(parts)
 

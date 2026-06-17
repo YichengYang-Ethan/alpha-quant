@@ -28,7 +28,7 @@ THEMES = {
 }
 STOP = set("the a an and or of to in for on with is are be as by at from this that its their our we "
            "company stock shares it has have was were will market price its also which than into "
-           "alpha picks portfolio buy thesis business overview strong our".split())
+           "portfolio buy thesis business overview strong our".split())
 
 
 def classify(text: str) -> str:
