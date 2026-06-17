@@ -8,7 +8,7 @@ export const meta = {
 // fresh Strong Buys (gate + floor, not already in the book), by Quant rank. A typical
 // service adds ~2/month. Computed inline by the deterministic screen; override via args.picks.
 const VENV = '/Users/ethanyang/clawd/.venv/bin/python'
-const ANALYZE = '/Users/ethanyang/Developer/github.com/YichengYang-Ethan/alpha-quant/scripts/alpha_analyze.py'
+const ANALYZE = '/Users/ethanyang/Developer/github.com/YichengYang-Ethan/alpha-quant/shared/alpha_analyze.py'
 const DEFAULT_PICKS = ['INTC', 'AMD']
 const picksIn = (args && Array.isArray(args.picks) && args.picks.length) ? args.picks : DEFAULT_PICKS
 log(`pass-through picks: writing theses for ${picksIn.length} Quant-selected names -> ${picksIn.join(', ')}`)

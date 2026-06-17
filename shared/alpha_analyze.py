@@ -7,14 +7,14 @@ K few-shot exemplars from the AP corpus (+ their realized outcomes), and the
 ledger/honesty context — into a package the /alpha-quant skill (or the workflow's
 Tier-2 subagent) turns into the thesis card. Same logic on both paths.
 
-CLI:  python scripts/alpha_analyze.py FN --source sa [--json]
+CLI:  python shared/alpha_analyze.py FN --source sa [--json]
 """
 from __future__ import annotations
 import json, subprocess, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(ROOT / "shared"))
 from lib.universe_scores import get_universe_scores, gate_strong_buy, FACTORS  # noqa: E402
 from lib.thesis_retriever import retrieve, format_fewshot                       # noqa: E402
 

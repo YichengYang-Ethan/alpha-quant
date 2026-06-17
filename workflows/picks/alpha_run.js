@@ -10,7 +10,7 @@ export const meta = {
 // Tier 0-1 (deterministic screen -> shortlist) is done INLINE before this runs and
 // passed via args.shortlist. This workflow spends LLM only on the shortlist (Tier 2-3).
 const VENV = '/Users/ethanyang/clawd/.venv/bin/python'
-const ANALYZE = '/Users/ethanyang/Developer/github.com/YichengYang-Ethan/alpha-quant/scripts/alpha_analyze.py'
+const ANALYZE = '/Users/ethanyang/Developer/github.com/YichengYang-Ethan/alpha-quant/shared/alpha_analyze.py'
 
 // args.shortlist (computed inline by the deterministic screen) overrides this demo default.
 // Demo default: a de-clustered shortlist (top Strong-Buys, <=2 per sector) so the

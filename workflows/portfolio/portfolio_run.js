@@ -6,7 +6,7 @@ export const meta = {
 
 const VENV = '/Users/ethanyang/clawd/.venv/bin/python'
 const ENGINE = '/Users/ethanyang/Developer/github.com/YichengYang-Ethan/alpha-quant'
-const ANALYZE = `${ENGINE}/scripts/alpha_analyze.py`
+const ANALYZE = `${ENGINE}/shared/alpha_analyze.py`
 const FEWSHOT = (args && args.fewshot) || ''  // local-only exemplar index path, passed at invocation (kept out of source)
 
 // Deterministic screen (run separately) produces the maintenance packet; its essentials are
@@ -36,7 +36,7 @@ const buys = await parallel(BUYS.map((tk) => () => agent(
   `Strong-Buy+floor universe and is being ADDED as a new ~3.3% equal-weight position this week. Document the add as a ` +
   `concise weekly-note buy rationale.\n` +
   `STEP 1 — data package: ${VENV} ${ANALYZE} ${tk} --source sa  (real quant + 5 factor grades V/G/P/M/R + factsheet + honesty).\n` +
-  (FEWSHOT ? `STEP 2 — similar past adds (style + outcomes): ${VENV} -c "import sys; sys.path.insert(0,'${ENGINE}/scripts/lib'); ` +
+  (FEWSHOT ? `STEP 2 — similar past adds (style + outcomes): ${VENV} -c "import sys; sys.path.insert(0,'${ENGINE}/shared/lib'); ` +
   `from thesis_retriever import retrieve, format_fewshot; print(format_fewshot(retrieve('${tk} ' + 'sector theme', k=3, index_path='${FEWSHOT}')))"\n` : '') +
   `STEP 3 — write the rationale in the model-portfolio weekly-note voice: lead with Market Cap + Quant Rating + ` +
   `Sector/Industry rank, then 2-4 sentences on the business and WHY the factor profile (walk the real grades; explain any ` +
