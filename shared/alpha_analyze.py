@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT / "shared"))
 from lib.universe_scores import get_universe_scores, gate_strong_buy, FACTORS  # noqa: E402
 from lib.thesis_retriever import retrieve, format_fewshot                       # noqa: E402
 
-MEITOU = "/Users/ethanyang/Developer/github.com/YichengYang-Ethan/meitou-5plus2/scripts/meitou_data.py"
+FACTSHEET = str(ROOT / "shared" / "factsheet.py")   # portable yfinance adapter, in-repo (no external dependency)
 VENV = "/Users/ethanyang/clawd/.venv/bin/python"
 LEDGER = ROOT / "data/alpha_picks/ap_ledger_2026-06-16.json"
 HOLDINGS = ROOT / "data/alpha_picks/ap_holdings_2026-06-16.json"
@@ -33,8 +33,8 @@ HONESTY = ("Single-name top-rated ≈ coin-flip: the pick portfolio's closed-sta
 
 def factsheet(ticker: str) -> dict:
     try:
-        out = subprocess.run([VENV, MEITOU, ticker, "--json"], capture_output=True, text=True, timeout=120)
-        # meitou prints JSON; grab the first {...} block
+        out = subprocess.run([VENV, FACTSHEET, ticker, "--json"], capture_output=True, text=True, timeout=120)
+        # factsheet prints JSON; grab the first {...} block
         s = out.stdout
         i, j = s.find("{"), s.rfind("}")
         return json.loads(s[i:j+1]) if i >= 0 else {"_err": "no json", "_stderr": out.stderr[:200]}

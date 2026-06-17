@@ -11,8 +11,10 @@ data/
 reports/
 *.Rhistory
 
-# The decoded rating recipe (the "secret sauce") + the method notes.
-references/
+# The decoded rating recipe (the "secret sauce") stays private (in alpha-quant-core).
+# Public exception: the 5+2 fundamental method docs (English, yfinance-only).
+references/*
+!references/5plus2/
 
 # Provider-specific tooling (corpus build, rating reverse-engineering, the
 # provider replica iterations, event study, and locale-coupled scripts).

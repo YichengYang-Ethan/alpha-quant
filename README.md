@@ -6,15 +6,17 @@ writer** produces cards in a disciplined Quant voice; a **mechanical
 entry/exit discipline** governs the book — all wrapped in an honest, regime-aware
 funnel.
 
-One shared engine drives **two pick modes** (mirroring two real quant products):
+One shared engine drives **three analysis methods**:
 
-| Mode | Folder | What it does |
+| Method | Folder | What it does |
 |---|---|---|
-| **picks** | `workflows/picks/` | concentrated funnel — screen → Strong-Buy gate → analyze a shortlist → **adversarially verify** → rank to a top-N (2-pick cadence). `alpha_run.js` (debate) + `alpha_run_pure.js` (pass-through). |
-| **portfolio** | `workflows/portfolio/` | equal-weight, actively-rebalanced **book maintenance** — screen the held book → KEEP / CUT / BUY → write a weekly-note rationale per add, benchmarked to an equal-weight index. `portfolio_run.js`. |
+| **picks** | `workflows/picks/` | concentrated funnel — screen → Strong-Buy gate → analyze a shortlist → **adversarially verify** → rank to a top-N. `alpha_run.js` (debate) + `alpha_run_pure.js` (pass-through). |
+| **portfolio** | `workflows/portfolio/` | equal-weight, actively-rebalanced **book maintenance** — screen the held book → KEEP / CUT / BUY → weekly-note rationale per add, vs an equal-weight benchmark. `portfolio_run.js`. |
+| **5plus2** | `workflows/5plus2/` | per-name **fundamental deep-dive** — the "5+2" 7-step method (industry / business / management / financials / valuation + bull + risk), **archetype-routed**, ending with a rating + target-price range. `run.js`. |
 
-Plus a **deep-analysis skill** — `/alpha-quant TICKER` — a data-grounded thesis
-card for one name (installed locally, not shipped here).
+A **unified skill router** — `/alpha-quant` — dispatches all three: a bare `TICKER`
+→ single-name factor card; `pick` / `portfolio` → those workflows; `5plus2 TICKER`
+→ the 5+2 deep-dive (skill installed locally, not shipped here).
 
 > ⚠️ **Method, not data.** This repo ships the *engine and methodology* only.
 > The rating data, thesis corpora, and pick ledgers come from a **premium
@@ -24,14 +26,19 @@ card for one name (installed locally, not shipped here).
 ## Layout
 
 ```
-shared/                      the engine — used by BOTH modes
+shared/                      the engine — used by ALL THREE methods
   lib/universe_scores.py       data-source abstraction + Strong-Buy/floor gate
   lib/thesis_retriever.py      few-shot retrieval over a thesis corpus (index_path-pluggable)
+  factsheet.py                 portable yfinance fundamental adapter (valuation/quality/growth/moat/...)
+  archetype_router.py          classify a name into 1 of 8 archetypes -> per-step playbook (5+2)
   alpha_analyze.py             Tier-2 atom: full data package for one name
+  screen_book.py               deterministic equal-weight Strong-Buy book screen
   build_fewshot_index.py       build a local few-shot index
 workflows/
   picks/                       concentrated pick funnel (alpha_run, alpha_run_pure)
   portfolio/                   equal-weight book maintenance (portfolio_run)
+  5plus2/                      7-step fundamental deep-dive (run)
+references/5plus2/             the 5+2 method docs (method/archetype-router/rubric/rating/voice)
 data/                          LOCAL ONLY (git-ignored) — provider data per namespace
 ```
 
