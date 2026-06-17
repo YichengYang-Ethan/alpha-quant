@@ -1,0 +1,39 @@
+# ── Public / private split ────────────────────────────────────────────
+# The public repo ships the GENERIC engine + docs only. Everything below is
+# derived from a premium quant-ratings provider (paid content) or is the
+# decoded rating recipe — LOCAL RESEARCH ONLY, never commit or republish.
+
+# Provider-derived data: thesis corpus, full-market ratings snapshot, pick
+# ledger, and indexes built from them.
+data/
+
+# Local research artifacts (notes + provider-derived analysis).
+reports/
+*.Rhistory
+
+# The decoded rating recipe (the "secret sauce") + the method notes.
+references/
+
+# Provider-specific tooling (corpus build, rating reverse-engineering, the
+# provider replica iterations, event study, and locale-coupled scripts).
+scripts/reverse_engineer.py
+scripts/build_ap_corpus.py
+scripts/event_study.py
+scripts/replica.py
+scripts/replica_v2.py
+scripts/replica_v15.py
+scripts/export_quant_cache.py
+scripts/strategy_sim.py
+scripts/wait_and_run.sh
+
+# Python / env
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+.DS_Store
+
+# Local caches that mirror provider paid data (also written outside the repo)
+*_ratings*.json
+*_snapshot*.json
+fewshot_index.json
