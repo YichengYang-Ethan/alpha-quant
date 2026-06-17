@@ -1,62 +1,66 @@
 export const meta = {
   name: 'portfolio-run',
-  description: 'Equal-weight Strong-Buy book maintenance: given a screened book (KEEP/CUT/BUY from the deterministic gate), write a data-driven weekly-note rationale for each new BUY. Mirrors an actively-rebalanced quant model portfolio — distinct from the 2-pick funnel in alpha_run.js.',
-  phases: [{ title: 'Buys', detail: 'weekly-note rationale per new equal-weight add' }],
+  description: 'Equal-weight Strong-Buy book builder. A first deterministic step screens the universe to a top-N equal-weight book, then writes a data-driven rationale per name. Self-wired (the screen agent runs the gate) — no external args, no file reads in JS. Distinct from the 2-pick funnel in alpha_run.js.',
+  phases: [
+    { title: 'Screen', detail: 'deterministic equal-weight Strong-Buy book' },
+    { title: 'Buys', detail: 'rationale per equal-weight add' },
+  ],
 }
 
 const VENV = '/Users/ethanyang/clawd/.venv/bin/python'
 const ENGINE = '/Users/ethanyang/Developer/github.com/YichengYang-Ethan/alpha-quant'
 const ANALYZE = `${ENGINE}/shared/alpha_analyze.py`
-const FEWSHOT = (args && args.fewshot) || ''  // local-only exemplar index path, passed at invocation (kept out of source)
+const SCREEN = `${ENGINE}/shared/screen_book.py`
+const N = (args && args.n) || 12
 
-// Deterministic screen (run separately) produces the maintenance packet; its essentials are
-// passed via args, with the current run's values as fallback (args binding can be flaky).
-const FIDELITY = (args && args.fidelity) || 90
-const KEPT = (args && args.kept) || 27
-const CUT = (args && Array.isArray(args.cut) && args.cut.length) ? args.cut : ['AUGO', 'AU', 'B']
-const BUYS = (args && Array.isArray(args.buys) && args.buys.length) ? args.buys
-  : ['INTC', 'MXL', 'AMD', 'UCTT', 'AXTI', 'TTMI']
-log(`book maintenance: kept ${KEPT}, cut ${CUT.length} (${CUT.join(',')}), writing ${BUYS.length} new buys -> ${BUYS.join(', ')}`)
-
-const RATIONALE = {
+// ---- Phase 1: the deterministic screen drives the book (no hardcoded list, no args needed) ----
+phase('Screen')
+const BOOK_SCHEMA = {
   type: 'object', additionalProperties: false,
-  required: ['ticker', 'gate_pass', 'conviction', 'rationale', 'key_grades', 'sector'],
+  required: ['n', 'weight_each', 'book'],
   properties: {
-    ticker: { type: 'string' },
-    gate_pass: { type: 'boolean' },
-    conviction: { type: 'number', description: '1-10' },
-    sector: { type: 'string' },
-    key_grades: { type: 'string', description: 'the 5 real factor grades V/G/P/M/R + quant' },
-    rationale: { type: 'string', description: "weekly-note-style buy rationale grounded ONLY in the data package + few-shot" },
+    n: { type: 'number' }, weight_each: { type: 'number' }, asof: { type: ['string', 'null'] },
+    book: { type: 'array', items: {
+      type: 'object', additionalProperties: false, required: ['ticker', 'quant'],
+      properties: { ticker: { type: 'string' }, quant: { type: 'number' } } } },
   },
 }
+const screen = await agent(
+  `Run the deterministic equal-weight Strong-Buy screen and RETURN ITS JSON VERBATIM as your structured output. ` +
+  `Run exactly this one command (no edits):\n  ${VENV} ${SCREEN} --n ${N} --source sa\n` +
+  `It prints {source, asof, n, weight_each, book:[{ticker,quant}]}. Return n, weight_each, asof, and book.`,
+  { label: 'screen', phase: 'Screen', schema: BOOK_SCHEMA }
+)
+const book = (screen && Array.isArray(screen.book)) ? screen.book : []
+if (!book.length) { log('screen returned an empty book'); return { error: 'empty screen', mode: 'equal-weight-book' } }
+log(`screen -> ${book.length} names @ ~${(screen.weight_each * 100).toFixed(1)}% each (asof ${screen.asof}) -> ${book.map((b) => b.ticker).join(', ')}`)
 
-const buys = await parallel(BUYS.map((tk) => () => agent(
-  `You are the analyst for an equal-weight, actively-rebalanced QUANT MODEL PORTFOLIO. ${tk} just entered the ` +
-  `Strong-Buy+floor universe and is being ADDED as a new ~3.3% equal-weight position this week. Document the add as a ` +
-  `concise weekly-note buy rationale.\n` +
-  `STEP 1 — data package: ${VENV} ${ANALYZE} ${tk} --source sa  (real quant + 5 factor grades V/G/P/M/R + factsheet + honesty).\n` +
-  (FEWSHOT ? `STEP 2 — similar past adds (style + outcomes): ${VENV} -c "import sys; sys.path.insert(0,'${ENGINE}/shared/lib'); ` +
-  `from thesis_retriever import retrieve, format_fewshot; print(format_fewshot(retrieve('${tk} ' + 'sector theme', k=3, index_path='${FEWSHOT}')))"\n` : '') +
-  `STEP 3 — write the rationale in the model-portfolio weekly-note voice: lead with Market Cap + Quant Rating + ` +
-  `Sector/Industry rank, then 2-4 sentences on the business and WHY the factor profile (walk the real grades; explain any ` +
-  `weak grade — e.g. a soft Value grade is acceptable when Momentum+Revisions lead) supports the add. Note one risk. ` +
-  `RULES: use ONLY the package's real grades (never estimate); this is an equal-weight ADD (not a concentrated bet); ` +
-  `keep it tight. Set gate_pass from the package and conviction 1-10.`,
-  { label: `buy:${tk}`, phase: 'Buys', schema: RATIONALE }
-)))
+// ---- Phase 2: one rationale per equal-weight add ----
+phase('Buys')
+// Buy rationales return PLAIN TEXT (no schema): "write the note" is a free-text task, and forcing a
+// StructuredOutput call here made ~45% of agents fail (they wrote the prose, never called the tool).
+const buys = await parallel(book.map((b) => () =>
+  agent(
+    `You are the analyst for an equal-weight, actively-rebalanced QUANT MODEL PORTFOLIO. ${b.ticker} is in the top-${book.length} ` +
+    `Strong-Buy+floor book and is added as a ~${(screen.weight_each * 100).toFixed(1)}% equal-weight position.\n` +
+    `STEP 1 — data package: ${VENV} ${ANALYZE} ${b.ticker} --source sa  (real quant + 5 factor grades V/G/P/M/R + factsheet + retrieved exemplars + honesty).\n` +
+    `STEP 2 — write a tight weekly-note buy rationale (~120 words): lead with Market Cap + Quant Rating + Sector/Industry rank, ` +
+    `then the business in a sentence and WHY the factor profile supports the add (walk the real grades; explain any weak grade — ` +
+    `a soft Value grade is acceptable when Momentum+Revisions lead). Note one risk; use the package's exemplars to sanity-check.\n` +
+    `RULES: use ONLY the package's real grades (never estimate); equal-weight ADD, not a concentrated bet. ` +
+    `Wrap ONLY the final weekly note in <note>...</note> tags (analysis may come before the tags). Do NOT call any tool to format it.`,
+    { label: `buy:${b.ticker}`, phase: 'Buys' }
+  ).then((t) => { const s = String(t || ''); const m = s.match(/<note>([\s\S]*?)<\/note>/i);
+    return { ticker: b.ticker, quant: b.quant, rationale: (m ? m[1] : s).trim() } }))
+)
 
-const ok = buys.filter(Boolean)
-log(`documented ${ok.length} new buys`)
+const ok = buys.filter((b) => b && b.rationale && b.rationale.length > 60)
+log(`documented ${ok.length}/${book.length} adds`)
 return {
-  mode: 'equal-weight-book-maintenance',
-  asof: (args && args.asof) || null,
+  mode: 'equal-weight-book',
+  source: 'sa', asof: screen.asof, n: book.length, weight_each: screen.weight_each,
   benchmark: 'equal-weight S&P (RSP)',
-  fidelity_vs_reference_pct: FIDELITY,
-  kept: KEPT,
-  cut: CUT,
-  new_buys: ok.map((b) => ({ ticker: b.ticker, sector: b.sector, conviction: b.conviction,
-    key_grades: b.key_grades, rationale: b.rationale })),
-  honesty: 'Typical single add ~= coin-flip vs the equal-weight benchmark (median ~-1.5%); the edge is the basket + ' +
-    'cutting names that lose Strong-Buy fast while letting winners run. Regime-dependent; gross of weekly-rebalance friction.',
+  new_buys: ok.map((b) => ({ ticker: b.ticker, quant: b.quant, rationale: b.rationale })),
+  honesty: 'A single top-rated add is ~coin-flip vs the equal-weight benchmark (median slightly negative); the edge is the ' +
+    'basket + cutting names that lose Strong-Buy fast while a few winners compound. Regime-dependent; gross of rebalance friction.',
 }
